@@ -249,6 +249,11 @@ async fn main () -> Result<()> {
             .num_args(1)
             .help("Preference order for video codecs, as a comma-separated list.")
             .long_help("Preference order for video codecs, as a comma-separated list of the form \"avc1,hev1,vvc1\". Each codec is specified in FourCC format. For a multi-codec manifest, this option allows you to choose which Representation to download. You can see the video codecs which are available for a manifest by using the --simulate commandline option (if full family.subfamily codec names are specified, you can use only the family part of the name)."))
+        .arg(Arg::new("want-video-id")
+            .long("want-video-id")
+            .value_name("SUBSTRING")
+            .num_args(1)
+            .long_help("When multiple video streams are offered in a manifest, specify which video Representation to download by its id. The provided substring is used as a filter on available video Representations: if the full id is provided this selects the specified Representation, and if only a substring of the id is specified, this preference will be combined with other preferences such as the quality level and codec preference to select a single preferred video stream. Use the --simulate commandline option to see the ids available in a manifest."))
         .arg(Arg::new("quality")
              .long("quality")
              .num_args(1)
@@ -856,6 +861,9 @@ async fn main () -> Result<()> {
         } else {
             warn!("Ignoring badly formatted codec1,codec2 argument to --prefer-video-codecs");
         }
+    }
+    if let Some(substring) = matches.get_one::<String>("want-video-id") {
+        dl = dl.want_video_id_substring(substring.clone());
     }
     // It's possible to specify both prefer-video-width/height and quality. The former is not
     // relevant concerning the audio stream, where the quality preference will be used. For the

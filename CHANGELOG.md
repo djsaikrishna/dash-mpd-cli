@@ -10,6 +10,14 @@ codecs which are available for a manifest by using the `--simulate` commandline 
 `family.subfamily` codec names of the form `avc1.64001E` are specified, you can use only the family
 part of the name.
 
+New commandline option `--want-video-id` which accepts a single argument which is interpreted as a
+substring. When multiple video streams are offered in a manifest, this allows you to specify which
+video Representation to download by referring to its id. The provided substring is used as a filter
+on available video Representations: if the full id is provided this selects the specified
+Representation, and if only a substring of the id is specified, this preference will be combined
+with other preferences such as the quality level and codec preference to select a single preferred
+video stream. Use the `--simulate` commandline option to see the ids available in a manifest.
+
 
 ## [0.2.32] - 2026-03-07
 
