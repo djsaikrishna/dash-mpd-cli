@@ -243,6 +243,12 @@ async fn main () -> Result<()> {
              .value_parser(clap::value_parser!(u64))
              .num_args(1)
              .help("When multiple video streams are available, choose that with vertical resolution closest to HEIGHT."))
+        .arg(Arg::new("prefer-video-codecs")
+            .long("prefer-video-codecs")
+            .value_name("CODEC1,CODEC2")
+            .num_args(1)
+            .help("Preference order for video codecs, as a comma-separated list.")
+            .long_help("Preference order for video codecs, as a comma-separated list of the form \"avc1,hev1,vvc1\". Each codec is specified in FourCC format. For a multi-codec manifest, this option allows you to choose which Representation to download. You can see the video codecs which are available for a manifest by using the --simulate commandline option (if full family.subfamily codec names are specified, you can use only the family part of the name)."))
         .arg(Arg::new("quality")
              .long("quality")
              .num_args(1)
@@ -301,7 +307,7 @@ async fn main () -> Result<()> {
              .conflicts_with("write-subs")
              .conflicts_with("keep-video")
              .conflicts_with("keep-audio")
-             .help("Download the manifest and print diagnostic information, but do not download audio, video or subtitle content, and write nothing to disk."))
+             .help("Download the manifest and print diagnostic information, but do not download audio, video or subtitle content, and write nothing to disk (only a \"dry run\")."))
         .arg(Arg::new("write-subs")
              .long("write-subs")
              .action(ArgAction::SetTrue)
@@ -840,6 +846,16 @@ async fn main () -> Result<()> {
     }
     if let Some(h) = matches.get_one::<u64>("prefer-video-height") {
         dl = dl.prefer_video_height(*h);
+    }
+    if let Some(codec_list) = matches.get_one::<String>("prefer-video-codecs") {
+        let ordering: Vec<String> = codec_list.split(',')
+            .map(str::to_string)
+            .collect();
+        if !ordering.is_empty() {
+            dl = dl.prefer_video_codecs(ordering);
+        } else {
+            warn!("Ignoring badly formatted codec1,codec2 argument to --prefer-video-codecs");
+        }
     }
     // It's possible to specify both prefer-video-width/height and quality. The former is not
     // relevant concerning the audio stream, where the quality preference will be used. For the

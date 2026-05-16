@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.33] - Unreleased
+
+New commandline option `--prefer-video-codecs` which accepts a comma-separated list of the form
+`avc1,hev1,vvc1`. Each codec is specified in FourCC format. For a multi-codec manifest (one which
+offers multiple Representation streams with the same resolution and different video encoding
+formats), this option allows you to choose which Representation to download. You can see the video
+codecs which are available for a manifest by using the `--simulate` commandline option. If full
+`family.subfamily` codec names of the form `avc1.64001E` are specified, you can use only the family
+part of the name.
+
+
 ## [0.2.32] - 2026-03-07
 
 Fix a bug in the progress reporting which led to an incorrect percent value being reported.
