@@ -137,11 +137,28 @@ Client private key and certificate (in PEM format) to be used when authenticatin
 
     --prefer-video-width <WIDTH>
 
-When multiple video streams are available, choose that with horizontal resolution closest to `WIDTH`.
+When multiple video streams are available, prefer those with horizontal resolution closest to `WIDTH`.
 
     --prefer-video-height <HEIGHT>
 
-When multiple video streams are available, choose that with vertical resolution closest to `HEIGHT`.
+When multiple video streams are available, prefer those with vertical resolution closest to `HEIGHT`.
+
+    --prefer-video-codecs <CODEC1,CODEC2>
+
+Preference order for video codecs, as a comma-separated list of the form `avc1,hev1,vvc1`. Each
+codec is specified in FourCC format. For a multi-codec manifest, this option allows you to choose
+which Representation to download. You can see the video codecs which are available for a manifest by
+using the `--simulate` commandline option (if full `family.subfamily` codec names are specified, you
+can use only the family part of the name).
+
+    --want-video-id <SUBSTRING>
+
+When multiple video streams are offered in a manifest, specify which video Representation to
+download by its id. The provided substring is used as a filter on available video Representations:
+if the full id is provided this selects the specified Representation, and if only a substring of the
+id is specified, this preference will be combined with other preferences such as the quality level
+and codec preference to select a single preferred video stream. Use the `--simulate` commandline
+option to see the ids available in a manifest.
 
     --quality <quality>
 
@@ -233,7 +250,7 @@ When muxing into `CONTAINER`, try muxing applications in order `ORDERING`. You c
 multiple times. Examples: `mp4:mp4box,vlc` and `avi:ffmpeg`.
 
     --concat-preference <CONTAINER:ORDERING>
- 
+
 When concatenating media streams into `CONTAINER`, try concat helper applications in order
 `ORDERING`. You can use this option multiple times.
 
