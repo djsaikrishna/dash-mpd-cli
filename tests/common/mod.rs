@@ -6,6 +6,7 @@ use std::env;
 use std::path::Path;
 use std::process::Command;
 use std::io::Cursor;
+use ffprobe::ffprobe;
 use anyhow::{Context, Result};
 use lazy_static::lazy_static;
 use std::sync::Once;
@@ -42,6 +43,43 @@ pub fn check_file_size_approx(p: &Path, expected: u64) {
     let meta = fs::metadata(p).unwrap();
     let ratio = meta.len() as f64 / expected as f64;
     assert!(0.9 < ratio && ratio < 1.1, "File sizes: expected {expected}, got {}", meta.len());
+}
+
+
+// Check either with ffprobe, and if that does not work (which is the case for Matroska containers
+// for example) try to obtain information from mediainfo.
+pub fn check_media_duration(p: &Path, expected: f64) {
+    use serde_json::Value;
+    
+    if let Ok(meta) = ffprobe(p) {
+        if let Some(video) = meta.streams.iter()
+            .find(|s| s.codec_type.eq(&Some(String::from("video"))))
+        {
+            if let Some(duration_str) = video.duration.as_ref() {
+                if let Ok(duration) = duration_str.parse::<f64>() {
+                    let ratio = duration / expected;
+                    assert!(0.9 < ratio && ratio < 1.1,
+                            "Media duration: expected {expected}, got {duration}");
+                    return;
+                }
+            }
+        }
+    }
+    let minfo = Command::new("mediainfo")
+        .arg("--output=JSON")
+        .arg(p)
+        .output()
+        .expect("failed to run mediainfo utility");
+    let out = String::from_utf8_lossy(&minfo.stdout);
+    let json: Value = serde_json::from_str(&out).expect("parsing mediainfo JSON");
+    let track0 = &json["media"]["track"][0];
+    if let Some(duration_str) = track0["Duration"].as_str() {
+        if let Ok(duration) = duration_str.parse::<f64>() {
+            let ratio = duration / expected;
+            assert!(0.9 < ratio && ratio < 1.1,
+                    "Media duration: expected {expected}, got {duration}");
+        }
+    }
 }
 
 
