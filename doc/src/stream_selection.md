@@ -4,7 +4,7 @@ Many DASH manifests offer multiple audio and video streams, with different audio
 different video resolutions and bandwidth/quality levels, different codecs, different role labels
 (main, alternate, commentary and so on). dash-mpd-cli provides several commandline arguments that
 allow you to express preferences for these different attributes, in order to download the audio and
-video stream you want:
+video stream (the Representation, in DASH terminology) you want:
 
 - `--quality` allows you to express a preference for best (highest download size), lowest or
   intermediate quality, that applies both to the video and the audio streams (when they are
@@ -14,7 +14,21 @@ video stream you want:
 - `--prefer-video-width` to request video whose width is closest to the specified number of pixels.
 
 - `--prefer-video-height` to request video whose height is closest to the specified number of pixels.
+
+- `--prefer-video-codecs` to specify which video codecs to prefer, for multi-codec manifests where
+  the same video content is available in the same resolution but using different encoding methods.
+  This option takes a comma-separated list of the form `avc1,hev1,vvc1` in which each codec is
+  specified in FourCC format. You can see the video codecs which are available for a manifest by
+  using the `--simulate` commandline option (if full `family.subfamily` codec names are specified,
+  you can use only the family part of the name).
   
+- `--want-video-id` to specify which video Representation to download by its id. The provided
+  substring is used as a filter on available video Representations: if the full id is provided this
+  selects the specified Representation, and if only a substring of the id is specified, this
+  preference will be combined with other preferences such as the quality level and codec preference
+  to select a single preferred video stream. Use the `--simulate` commandline option to see the ids
+  available in a manifest.
+
 - `--prefer-language` to request the audio track with the desired language.
 
 - `--role-preference` allows you to specify a preference ordering for the Role label present in
@@ -25,21 +39,25 @@ If you run dash-mpd-cli with the `--verbose` and `--simulate` arguments, it will
 on the attributes of the available streams, similar to that shown below:
 
 ```
-07:59:26  INFO Streams in period p0 (#1), duration 464.000s:
-07:59:26  INFO   audio mp4a.40.2         |    94 Kbps |  lang=eng role=main
-07:59:26  INFO   audio mp4a.40.2         |   126 Kbps |  lang=eng role=main
-07:59:26  INFO   audio mp4a.40.2         |    94 Kbps |  lang=fin role=alternate
-07:59:26  INFO   audio mp4a.40.2         |   126 Kbps |  lang=fin role=alternate
-07:59:26  INFO   audio mp4a.40.2         |    94 Kbps |  lang=ger role=alternate
-07:59:26  INFO   audio mp4a.40.2         |   126 Kbps |  lang=ger role=alternate
-07:59:26  INFO   audio mp4a.40.2         |    94 Kbps |  lang=swe role=alternate
-07:59:26  INFO   audio mp4a.40.2         |   126 Kbps |  lang=swe role=alternate
-07:59:26  INFO   video hvc1.1.6.L120.90  |   469 Kbps |  1280x720 role=main
-07:59:26  INFO   video hvc1.1.6.L120.90  |   791 Kbps | 1920x1080 role=main
-07:59:26  INFO   video hvc1.1.6.L150.90  |  1503 Kbps | 3840x2160 role=main
+10:45:17  INFO Streams in period #1, duration 12m 14s:
+10:45:17  INFO   audio mp4a.40.2         |    62 Kbps |   lang=en role=main (id=audio_eng=64349)
+10:45:17  INFO   audio mp4a.40.2         |   125 Kbps |   lang=en role=main (id=audio_eng=128407)
+10:45:17  INFO   video hev1.1.6.H150.90  |  1007 Kbps |  1680x750 role=main (id=video_eng=1032000)
+10:45:17  INFO   video hev1.1.6.H150.90  |  1220 Kbps | 2576x1150 role=main (id=video_eng=1250000)
+10:45:17  INFO   video hev1.1.6.H150.90  |  1562 Kbps | 3360x1500 role=main (id=video_eng=1600000)
+10:45:17  INFO   subs          Wvtt/wvtt |         en | role=subtitle
+10:45:17  INFO   subs          Wvtt/wvtt |         de | role=subtitle
+10:45:17  INFO   subs          Wvtt/wvtt |         es | role=subtitle
+10:45:17  INFO   subs          Wvtt/wvtt |         fr | role=subtitle
+10:45:17  INFO   subs          Wvtt/wvtt |         nl | role=subtitle
+10:45:17  INFO   subs          Wvtt/wvtt |      pt-br | role=subtitle
+10:45:17  INFO   subs          Wvtt/wvtt |      pt-pt | role=subtitle
+10:45:17  INFO   subs          Wvtt/wvtt |         ru | role=subtitle
+10:45:17  INFO   subs          Wvtt/wvtt |         zh | role=subtitle
+10:45:17  INFO   subs          Wvtt/wvtt |    zh-hans | role=subtitle
 ```
 
-The list belows specifies the order in which these preferences are handled:
+The list belows specifies the **order** in which these preferences are handled:
 
 - First filter out AdaptationSets in the manifest that do not correspond to our language
   preference. If not language preference is specified, no filtering takes place. If multiple
@@ -52,17 +70,24 @@ The list belows specifies the order in which these preferences are handled:
   one role in the expressed role preference, only the adaptation which is closest to the head of the
   role preference list is passed on to the next stage of filtering.
 
-- When multiple Representation elements are present, filter them according to any specified quality
-  preference. If no quality preference is specified, no filtering takes place. The filtering is
-  based on the `@qualityRanking` attribute, if it is specified on the Representation elements, and
-  otherwise based on the `@bandwidth` attribute specified. Note that quality ranking may be
-  different from bandwidth ranking when different codecs are used.
+- When multiple Representation elements are present, filter them according to the video id
+  substring, if specified. If the full id is provided this selects the specified Representation, and
+  if only a substring of the id is specified, all Representations that match the substring move to
+  the next stage of filtering.
 
-- If a video width preference is specified, only select the Representation whose video width is
-  closest to the requested width.
+- If a video width preference is specified, retain only the Representations with a video width
+  closest to the requested width (there may be multiple Representations with the same video width
+  but with different codecs, for example).
 
-- If a video height preference is specified, only select the Representation whose video height is
+- If a video height preference is specified, retain only the Representations with a video height
   closest to the requested height.
+
+- When multiple Representation elements are still present, filter them according to any specified
+  quality preference. If no quality preference is specified, the Representation (audio and video)
+  with the lowest quality/bandwidth (and therefore file size) is selected. The filtering is based on
+  the `@qualityRanking` attribute, if it is specified on the Representation elements, and otherwise
+  based on the `@bandwidth` attribute specified. Note that quality ranking may be different from
+  bandwidth ranking when different codecs are used.
 
 - If more than one stream remains under consideration after all the preceding steps, select the
   first stream that appears in the XML of the DASH manifest.
