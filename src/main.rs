@@ -31,7 +31,7 @@ use url::Url;
 use fs_err as fs;
 use reqwest::header;
 use clap::{Arg, ArgAction, ValueHint};
-use number_prefix::{NumberPrefix, Prefix};
+use unit_prefix::{NumberPrefix, Prefix};
 use indicatif::{ProgressBar, ProgressStyle};
 use anyhow::{Result, Context};
 use tracing_subscriber::EnvFilter;
@@ -236,13 +236,13 @@ async fn main () -> Result<()> {
              .value_name("WIDTH")
              .value_parser(clap::value_parser!(u64))
              .num_args(1)
-             .help("When multiple video streams are available, choose that with horizontal resolution closest to WIDTH."))
+             .help("When multiple video streams are available, prefer those with horizontal resolution closest to WIDTH."))
         .arg(Arg::new("prefer-video-height")
              .long("prefer-video-height")
              .value_name("HEIGHT")
              .value_parser(clap::value_parser!(u64))
              .num_args(1)
-             .help("When multiple video streams are available, choose that with vertical resolution closest to HEIGHT."))
+             .help("When multiple video streams are available, prefer those with vertical resolution closest to HEIGHT."))
         .arg(Arg::new("prefer-video-codecs")
             .long("prefer-video-codecs")
             .value_name("CODEC1,CODEC2")
