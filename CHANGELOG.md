@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.33] - Unreleased
+## [0.2.33] - 2026-05-17
 
 New commandline option `--prefer-video-codecs` which accepts a comma-separated list of the form
 `avc1,hev1,vvc1`. Each codec is specified in FourCC format. For a multi-codec manifest (one which
@@ -17,6 +17,23 @@ on available video Representations: if the full id is provided this selects the 
 Representation, and if only a substring of the id is specified, this preference will be combined
 with other preferences such as the quality level and codec preference to select a single preferred
 video stream. Use the `--simulate` commandline option to see the ids available in a manifest.
+
+This release improves the way in which video stream selection is implemented, to allow selection
+based on both video width/height and codec and quality, in situations where multiple Representations
+are available with the same resolution but different codecs or quality settings. If there are
+multiple Representations with the same “score” with respect to a user-specified parameter (for
+example, several Representations with the same video resolution but with different codecs), all
+identical score Representations will now be passed on to the next filtering stage, whereas
+previously only one Representation (the first listed in the manifest) would be selected. Filtering
+of video Representations takes place in the following order:
+
+  - @id substring
+  - video width
+  - video height
+  - video codec
+  - quality/bandwidth (defaulting to the lowest quality and file size)
+
+Migrate from the unmaintained `number_prefix` crate to the `unit-prefix` crate.
 
 
 ## [0.2.32] - 2026-03-07

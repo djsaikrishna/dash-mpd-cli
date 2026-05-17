@@ -82,8 +82,8 @@ The following features are supported:
   Common Encryption.
 
 - Support for selecting the streams to download based on audio language, quality, horizontal and
-  vertical resolution of the video stream, and role annotation (e.g. `main` instead of `alternate`
-  role).
+  vertical resolution of the video stream, video codec, stream id and role annotation (e.g. `main`
+  instead of `alternate` role).
 
 - Support for **[rewriting the MPD
   manifest](https://emarsden.github.io/dash-mpd-cli/rewriting.html)** before downloading, for
